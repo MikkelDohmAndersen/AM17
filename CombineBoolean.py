@@ -9,11 +9,11 @@ for i in x:
     if i == 'True':
         a.append('True')
     else:
-        for i in y:
-            if i == 'True':
-                a.append('True')
-            else:
-                a.append('False')
+        a.append('False')
+
+for i in range(len(y)):
+    if y[i] == 'True':
+        a[i]= 'True'
 
 
 print(a)
