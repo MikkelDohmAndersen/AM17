@@ -5,11 +5,11 @@ Column - Standard fire with reduced cross section method
         CL: Center Line for column
         F: Vertical load,N, for the beam to support (Calculated as a centrally placed load, also in the case when the column's center of gravity moves)
         Str: Strength class for the wood
-        Sup: Support conditions for the column
+        Sup: Support conditions for the column (1=Simply supported both ends, 2=One end fixed and one end not supported, 3=One end fixed and one end simply supported, 4=Both ends fixed
         ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber)
-        WS: Wood Species (1 = Conifer p>290 kg/m3, 2 = Laminated wood p>290 kg/m3 , 3 = Hardwood p>450 kg/m3, 4 = Plywood with thickness d>20mm and p>450kg/m3 
-        t: Time of exposure
-        SEF: Sides Exposed to Fire
+        WS: Wood Species (1=Conifer p>290 kg/m3, 2=Laminated wood p>290 kg/m3 , 3=Hardwood p>450 kg/m3 
+        t: Time of exposure in minutes
+        SEF: Sides Exposed to Fire(1=Width, 2=Height, 3=Width+Height, 4=Width+2*Height, 5=2*Width+Height, 6=2*Width, 7=2*Height, 8=All
     Returns:
         NRc,fire: Charateristic resistance of the column after fire
         Width: Width of the cross section before fire
@@ -19,6 +19,18 @@ Column - Standard fire with reduced cross section method
 
 import rhinoscriptsyntax as rs
 import math as m
+
+# Support conditions
+if Sup==1:
+    l0=1
+elif Sup==2:
+    l0=2
+elif Sup==3:
+    l0=0.699
+elif Sup==4:
+    l0=1/2
+else:
+    l0=1
 
 # Strength class
 if str.upper(Str)=='C30':
@@ -61,7 +73,20 @@ elif str.lower(ToW)=='glulam':
     W=[]
     H=[]
 
+#Wood species
+if WS==1:
+    Bn=0.8
+elif WS==2:
+    Bn=0.7
+elif WS==3:
+    Bn=0.55
+else:
+    Bn=0.8
 
+#Sides exposed to fire
+SEF = m.ceil(SEF)
+if SEF>8:
+    SEF=8
 
 # Calculation of crossection after fire
 
@@ -69,6 +94,6 @@ elif str.lower(ToW)=='glulam':
 # Calculation of new moment of inertia
 
 # Calculation of NRc,fire
-ls = rs.CurveLength(CL)*Sup
+#ls = rs.CurveLength(CL)*l0
 
 # 3D model for "baking"
