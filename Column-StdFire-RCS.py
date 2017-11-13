@@ -18,6 +18,7 @@ Column - Standard fire with reduced cross section method
 """
 
 import rhinoscriptsyntax as rs
+import Rhino as R
 import math as m
 
 """-------------------------------------------------------------------------"""
@@ -68,12 +69,15 @@ elif str.upper(Str)=='GL24':
 if str.lower(ToW)=='sawn':
     W=[50,38,50,50,75,50,50,63,50,50,100,50,75,75,75,125,75,100,150,100,175,200]
     H=[50,73,75,100,75,125,150,125,175,200,100,225,150,175,200,125,225,200,150,225,175,200]
+    Bc=0.2
 elif str.lower(ToW)=='planed':
     W=[45,45,45,70,45,45,45,45,95,45,70,70,70,120,70,95,145,95,170,195]
     H=[45,70,95,70,120,145,170,195,95,220,145,170,195,120,220,195,145,220,170,195]
+    Bc=0.2
 elif str.lower(ToW)=='glulam':
     W=[]
     H=[]
+    Bc=0.1
 
 #Wood species
 if WS==1:
@@ -102,6 +106,7 @@ dchar = Bn*t+dpy
 # New cross section
 w=[] 
 h=[]
+Ar = []
 for i in range(len(W)):
     if SEF==1:
         w.append(W[i])
@@ -124,17 +129,73 @@ for i in range(len(W)):
     elif SEF==7:
         w.append(W[i]-2*dchar)
         h.append(H[i])
-        #print('z 7')
     elif SEF==8:
         w.append(W[i]-2*dchar)
         h.append(H[i]-2*dchar)
-        #print('z 8')
+    # New Area of cross section
+    Ar.append(w[i]*h[i])
 
-print w, h
-
+"""-------------------------------------------------------------------------"""
 # Calculation of new moment of inertia
+Iy = []
+Iz = []
+for i in range(len(W)):
+    Iy.append(1/12*w[i]*h[i]**3)
+    Iz.append(1/12*h[i]*w[i]**3)
+"""-------------------------------------------------------------------------"""
 
-# Calculation of NRc,fire
-#ls = rs.CurveLength(CL)*l0
+# Verification of wooden column (Calculation of NRc,fire)
+# Critical buckling length
+ls = rs.CurveLength(CL)*l0
 
+# Checking for weakest axis
+I = []
+for i in range(len(W)):
+    if h[i]>w[i]:
+        I.append(Iz[i])
+    else:
+        I.append(Iy[i])
+
+Lambda = []
+SigmaE = []  
+kE = []  
+Lambdarel = [] 
+kfire = []
+kc = []
+Nrcfire = []
+
+for i in range(len(W)):
+    #Slenderness ratio
+    Lambda.append(ls/m.sqrt(I[i]/Ar[i]))
+    #Euler stress
+    SigmaE.append(m.pi**2*(E/(Lambda[i]**2)))
+    #Euler factor
+    kE.append(SigmaE[i]/fc)
+    #Relative slenderness ratio
+    Lambdarel.append(1/m.sqrt(kE[i]))
+    #kfire coefficient
+    kfire.append(0.5*(1+Bc*(Lambdarel[i]-0.5)+Lambdarel[i]**2))
+    #Critical buckling factor
+    if Lambdarel[i]<0.5:
+        kc.append(1.0)
+    else:
+        kc.append(1/(kfire[i]+m.sqrt(kfire[i]**2-Lambdarel[i]**2)))
+    #Characteristic resistance of wood
+    Nrcfire.append(kc[i]*(E*fc)*Ar[i])
+
+# Selectiong the smallet profile with capability to support the load
+Wi = []
+He = []
+NRc =[]
+for i in range(len(W)):
+    if Nrcfire[i]>F:
+        Wi.append(W[i])
+        He.append(H[i])
+        NRc.append(Nrcfire[i])
+Width = Wi[0]
+Height = He[0]
+NRcfire = NRc[0]
+
+print NRcfire
+"""-------------------------------------------------------------------------"""
 # 3D model for "baking"
