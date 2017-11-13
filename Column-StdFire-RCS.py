@@ -20,6 +20,8 @@ Column - Standard fire with reduced cross section method
 import rhinoscriptsyntax as rs
 import math as m
 
+"""-------------------------------------------------------------------------"""
+# USER INPUTS
 # Support conditions
 if Sup==1:
     l0=1
@@ -88,8 +90,47 @@ SEF = m.ceil(SEF)
 if SEF>8:
     SEF=8
 
-# Calculation of crossection after fire
+"""-------------------------------------------------------------------------"""
+# CALCULATION OF CROSS SECTION AFTER FIRE
+#Pyrolysis Zone
+if t<20: 
+    dpy = 7/20*t 
+else:
+    dpy = 7
+# Charring layer
+dchar = Bn*t+dpy
+# New cross section
+w=[] 
+h=[]
+for i in range(len(W)):
+    if SEF==1:
+        w.append(W[i])
+        h.append(H[i]-dchar)
+    elif SEF==2:
+        w.append(W[i]-dchar)
+        h.append(H[i])
+    elif SEF==3:
+        w.append(W[i]-dchar)
+        h.append(H[i]-dchar)
+    elif SEF==4:
+        w.append(W[i]-2*dchar)
+        h.append(H[i]-dchar)
+    elif SEF==5:
+        w.append(W[i]-dchar)
+        h.append(H[i]-2*dchar)
+    elif SEF==6:
+        w.append(W[i])
+        h.append(H[i]-2*dchar)
+    elif SEF==7:
+        w.append(W[i]-2*dchar)
+        h.append(H[i])
+        #print('z 7')
+    elif SEF==8:
+        w.append(W[i]-2*dchar)
+        h.append(H[i]-2*dchar)
+        #print('z 8')
 
+print w, h
 
 # Calculation of new moment of inertia
 
