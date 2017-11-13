@@ -103,6 +103,7 @@ else:
     dpy = 7
 # Charring layer
 dchar = Bn*t+dpy
+
 # New cross section
 w=[] 
 h=[]
@@ -183,12 +184,13 @@ for i in range(len(W)):
     #Characteristic resistance of wood
     Nrcfire.append(kc[i]*(E*fc)*Ar[i])
 
-# Selectiong the smallet profile with capability to support the load
+
+# Selecting the smallet profile with capability to support the load
 Wi = []
 He = []
 NRc =[]
 for i in range(len(W)):
-    if Nrcfire[i]>F:
+    if Nrcfire[i]>F and w[i]>0 and h[i]>0:
         Wi.append(W[i])
         He.append(H[i])
         NRc.append(Nrcfire[i])
@@ -196,6 +198,18 @@ Width = Wi[0]
 Height = He[0]
 NRcfire = NRc[0]
 
-print NRcfire
+
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
+
+End = rs.CurveEndPoint(CL)
+Start = rs.CurveStartPoint(CL)
+Vector = rs.VectorAdd(Start,End)
+Plane = rs.PlaneFromNormal(Start,Vector)
+CrossSection = rs.AddRectangle(Plane, Width, Height)
+#Translation vector center
+Vec1 =rs.VectorAdd([0,0,0],[-Width/2,-Height/2,0])
+print Vec1
+Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
+rs.CapPlanarHoles(Geo)
+
