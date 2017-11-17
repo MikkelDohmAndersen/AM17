@@ -6,8 +6,10 @@ Column - Standard fire with reduced cross section method
         F: Vertical load,N, for the beam to support (Calculated as a centrally placed load, also in the case when the column's center of gravity moves)
         Str: Strength class for the wood
         Sup: Support conditions for the column (1=Simply supported both ends, 2=One end fixed and one end not supported, 3=One end fixed and one end simply supported, 4=Both ends fixed
-        ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber)
-        WS: Wood Species (1=Conifer p>290 kg/m3, 2=Laminated wood p>290 kg/m3 , 3=Hardwood p>450 kg/m3 
+        ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber) standard profiles.
+        WidthProfile: Width of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated on ToW.
+        HeightProfile: Height of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated on ToW.
+        WS: Wood Species (1=Conifer p>290 kg/m3, 2=Laminated wood p>290 kg/m3 , 3=Hardwood p>450 kg/m3
         t: Time of exposure in minutes
         SEF: Sides Exposed to Fire(1=Width, 2=Height, 3=Width+Height, 4=Width+2*Height, 5=2*Width+Height, 6=2*Width, 7=2*Height, 8=All
     Returns:
@@ -64,19 +66,26 @@ elif str.upper(Str)=='GL24':
     fc=24
     E=9400
 
-# Type of Wood
-if str.lower(ToW)=='sawn':
+if WidthProfile>0 and HeightProfile>0:
+    W=[WidthProfile]
+    H=[HeightProfile]
+    Bc=0.1
+    Input=0
+elif str.lower(ToW)=='sawn':
     W=[50,38,50,50,75,50,50,63,50,50,100,50,75,75,75,125,75,100,150,100,175,200]
     H=[50,73,75,100,75,125,150,125,175,200,100,225,150,175,200,125,225,200,150,225,175,200]
     Bc=0.2
+    Input=1
 elif str.lower(ToW)=='planed':
     W=[45,45,45,70,45,45,45,45,95,45,70,70,70,120,70,95,145,95,170,195]
     H=[45,70,95,70,120,145,170,195,95,220,145,170,195,120,220,195,145,220,170,195]
     Bc=0.2
+    Input=1
 elif str.lower(ToW)=='glulam':
     W=[]
     H=[]
     Bc=0.1
+    Input=1
 
 #Wood species
 if WS==1:
@@ -194,23 +203,26 @@ for i in range(len(wr)):
     #Characteristic resistance of wood
     Nrcfire.append(Ar[i]*fc*kc[i])
 
+if Input==0:
+    Width = WidthProfile
+    Height = HeightProfile
+    NRcfire = Nrcfire
+else:
 # Selecting the smallest profile with capability to support the load
-Wi = []
-He = []
-NRc =[]
-for i in range(len(wr)):
-    if Nrcfire[i]>F:
-        Wi.append(Wr[i])
-        He.append(Hr[i])
-        NRc.append(Nrcfire[i])
-Width = Wi[0]
-Height = He[0]
-NRcfire = NRc[0]
+    Wi = []
+    He = []
+    NRc =[]
+    for i in range(len(wr)):
+        if Nrcfire[i]>F:
+            Wi.append(Wr[i])
+            He.append(Hr[i])
+            NRc.append(Nrcfire[i])
+    Width = Wi[0]
+    Height = He[0]
+    NRcfire = NRc[0]
 
-print wr, Wr, hr, Hr, NRc
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
-
 End = rs.CurveEndPoint(CL)
 Start = rs.CurveStartPoint(CL)
 Vector = rs.VectorAdd(Start,End)
