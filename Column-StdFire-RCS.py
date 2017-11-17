@@ -18,7 +18,6 @@ Column - Standard fire with reduced cross section method
 """
 
 import rhinoscriptsyntax as rs
-import Rhino as R
 import math as m
 
 """-------------------------------------------------------------------------"""
@@ -104,10 +103,9 @@ else:
 # Charring layer
 dchar = Bn*t+dpy
 
-# New cross section
-w=[] 
-h=[]
-Ar = []
+# Cross section after fire
+w = [] 
+h = []
 for i in range(len(W)):
     if SEF==1:
         w.append(W[i])
@@ -133,26 +131,38 @@ for i in range(len(W)):
     elif SEF==8:
         w.append(W[i]-2*dchar)
         h.append(H[i]-2*dchar)
-    # New Area of cross section
-    Ar.append(w[i]*h[i])
+
+wr = [] 
+hr = []
+Wr = []
+Hr = []
+Ar = []
+for i in range(len(w)):
+    if w[i]>0 and h[i]>0:
+        wr.append(w[i])
+        hr.append(h[i])
+        Wr.append(W[i])
+        Hr.append(H[i])
+        # Area of cross section
+        Ar.append(w[i]*h[i])
 
 """-------------------------------------------------------------------------"""
 # Calculation of new moment of inertia
 Iy = []
 Iz = []
-for i in range(len(W)):
-    Iy.append(1/12*w[i]*h[i]**3)
-    Iz.append(1/12*h[i]*w[i]**3)
+for i in range(len(wr)):
+    Iy.append(1/12*wr[i]*hr[i]**3)
+    Iz.append(1/12*hr[i]*wr[i]**3)
 """-------------------------------------------------------------------------"""
 
 # Verification of wooden column (Calculation of NRc,fire)
 # Critical buckling length
-ls = rs.CurveLength(CL)*l0
+ls = rs.CurveLength(CL)
 
 # Checking for weakest axis
 I = []
-for i in range(len(W)):
-    if h[i]>w[i]:
+for i in range(len(wr)):
+    if hr[i]>wr[i]:
         I.append(Iz[i])
     else:
         I.append(Iy[i])
@@ -165,15 +175,15 @@ kfire = []
 kc = []
 Nrcfire = []
 
-for i in range(len(W)):
+for i in range(len(wr)):
     #Slenderness ratio
     Lambda.append(ls/m.sqrt(I[i]/Ar[i]))
     #Euler stress
-    SigmaE.append(m.pi**2*(E/(Lambda[i]**2)))
+    SigmaE.append(m.pi**2*(E/fc))
     #Euler factor
     kE.append(SigmaE[i]/fc)
     #Relative slenderness ratio
-    Lambdarel.append(1/m.sqrt(kE[i]))
+    Lambdarel.append(Lambda[i]/m.sqrt(SigmaE[i]))
     #kfire coefficient
     kfire.append(0.5*(1+Bc*(Lambdarel[i]-0.5)+Lambdarel[i]**2))
     #Critical buckling factor
@@ -182,23 +192,22 @@ for i in range(len(W)):
     else:
         kc.append(1/(kfire[i]+m.sqrt(kfire[i]**2-Lambdarel[i]**2)))
     #Characteristic resistance of wood
-    Nrcfire.append(kc[i]*(E*fc)*Ar[i])
+    Nrcfire.append(Ar[i]*fc*kc[i])
 
-
-# Selecting the smallet profile with capability to support the load
+# Selecting the smallest profile with capability to support the load
 Wi = []
 He = []
 NRc =[]
-for i in range(len(W)):
-    if Nrcfire[i]>F and w[i]>0 and h[i]>0:
-        Wi.append(W[i])
-        He.append(H[i])
+for i in range(len(wr)):
+    if Nrcfire[i]>F:
+        Wi.append(Wr[i])
+        He.append(Hr[i])
         NRc.append(Nrcfire[i])
 Width = Wi[0]
 Height = He[0]
 NRcfire = NRc[0]
 
-
+print wr, Wr, hr, Hr, NRc
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
 
@@ -209,7 +218,6 @@ Plane = rs.PlaneFromNormal(Start,Vector)
 CrossSection = rs.AddRectangle(Plane, Width, Height)
 #Translation vector center
 Vec1 =rs.VectorAdd([0,0,0],[-Width/2,-Height/2,0])
-print Vec1
 Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
 rs.CapPlanarHoles(Geo)
 
