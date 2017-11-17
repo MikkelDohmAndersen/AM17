@@ -189,7 +189,7 @@ End = rs.CurveEndPoint(CL)
 Start = rs.CurveStartPoint(CL)
 Vector = rs.VectorAdd(Start,End)
 Plane = rs.PlaneFromNormal(Start,Vector)
-CrossSection = rs.AddRectangle(Plane, Width, Height)
+CrossSection = rs.AddRectangle(Plane, Height, Width)
 #Translation vector center
 Vec1 =rs.VectorAdd([0,0,0],[-Width/2,-Height/2,0])
 Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
