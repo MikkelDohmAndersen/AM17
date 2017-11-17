@@ -17,6 +17,8 @@ Column - Standard fire with reduced cross section method
         Width: Width [mm] of the cross section before fire
         Height: Height [mm] of the cross section before fire
         Geo: 3D model of the cross section
+        Utilization: Utilization rate [%]
+        ErrorMessage: Check this output for error messages
 """
 
 import rhinoscriptsyntax as rs
@@ -151,6 +153,7 @@ for i in range(len(w)):
         # Area of cross section
         Ar.append(w[i]*h[i])
 
+
 """-------------------------------------------------------------------------"""
 # Calculation of new resistance moment 
 Wy = []
@@ -163,14 +166,17 @@ for i in range(len(wr)):
 mmaxfire = []
 for i in range(len(wr)):
     mmaxfire.append(fm*Wy[i])
-print mmaxfire
 
 if Input==0:
-    Width = WidthProfile
-    Height = HeightProfile
-    Mmaxfire = mmaxfire/1000
+    if mmaxfire[i]>Mmax:
+       Width = WidthProfile
+       Height = HeightProfile
+       Mmaxfire = mmaxfire[0]/1000
+       Utilization = Mmax/Mmaxfire*10**(-4)
+    else:
+        ErrorMessage='No profiles with selected citeria can support the load'
 else:
-# Selecting the smallest profile with capability to support the load
+    # Selecting the smallest profile with capability to support the load
     Wi = []
     He = []
     mmax =[]
@@ -179,19 +185,27 @@ else:
             Wi.append(Wr[i])
             He.append(Hr[i])
             mmax.append(mmaxfire[i])
-    Width = Wi[0]
-    Height = He[0]
-    Mmaxfire = mmax[0]/(10**6)
-print Mmax
+    if len(Wi)>0:
+        Width = Wi[0]
+        Height = He[0]
+        Mmaxfire = mmax[0]/(10**6)
+        Utilization = Mmax/Mmaxfire*10**(-4)
+    else:
+        ErrorMessage='No profiles with selected citeria can support the load'
+
+
+
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
-End = rs.CurveEndPoint(CL)
-Start = rs.CurveStartPoint(CL)
-Vector = rs.VectorAdd(Start,End)
-Plane = rs.PlaneFromNormal(Start,Vector)
-CrossSection = rs.AddRectangle(Plane, Height, Width)
-#Translation vector center
-Vec1 =rs.VectorAdd([0,0,0],[-Width/2,-Height/2,0])
-Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
-rs.CapPlanarHoles(Geo)
+if mmaxfire[i]>Mmax:
+    End = rs.CurveEndPoint(CL)
+    Start = rs.CurveStartPoint(CL)
+    Vector = rs.VectorAdd(Start,End)
+    Plane = rs.PlaneFromNormal(Start,Vector)
+    CrossSection = rs.AddRectangle(Plane, Height, Width)
+    #Translation vector center
+    Vec1 =rs.VectorAdd([0,0,0],[-Width/2,-Height/2,0])
+    Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
+    rs.CapPlanarHoles(Geo)
+
 
