@@ -3,8 +3,8 @@ Column - Standard fire with reduced cross section method
 
     Args:
         CL: Center Line for column
-        F: Vertical load,N, for the beam to support (Calculated as a centrally placed load, also in the case when the column's center of gravity moves)
-        Str: Strength class for the wood
+        F: Vertical load,N, for the column to support (Calculated as a centrally placed load, also in the case when the column's center of gravity moves)
+        Str: Strength class for the wood (C30, C24, C18, C14, GL32h, GL28h or GL24h)
         Sup: Support conditions for the column (1=Simply supported both ends, 2=One end fixed and one end not supported, 3=One end fixed and one end simply supported, 4=Both ends fixed
         ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber) standard profiles.
         WidthProfile: Width of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated on ToW.
@@ -17,6 +17,9 @@ Column - Standard fire with reduced cross section method
         Width: Width of the cross section before fire
         Height: Height of the cross section before fire
         Geo: 3D model of the cross section
+        Utilization: Utilization rate [%]
+        ErrorMessage: Check this output for error messages
+
 """
 
 import rhinoscriptsyntax as rs
@@ -53,15 +56,15 @@ elif str.upper(Str)=='C14':
     fm=14
     fc=16
     E=4700
-elif str.upper(Str)=='GL32':
+elif str.upper(Str)=='GL32H':
     fm=32
     fc=29
     E=11100
-elif str.upper(Str)=='GL28':
+elif str.upper(Str)=='GL28H':
     fm=38
     fc=26.5
     E=10200
-elif str.upper(Str)=='GL24':
+elif str.upper(Str)=='GL24H':
     fm=24
     fc=24
     E=9400
@@ -204,9 +207,14 @@ for i in range(len(wr)):
     Nrcfire.append(Ar[i]*fc*kc[i])
 
 if Input==0:
-    Width = WidthProfile
-    Height = HeightProfile
-    NRcfire = Nrcfire
+    if Nrcfire>F:
+        Width = WidthProfile
+        Height = HeightProfile
+        NRcfire = Nrcfire
+        Utilization = F/NRcfire
+    else:
+        ErrorMessage='No profiles with selected citeria can support the load'
+
 else:
 # Selecting the smallest profile with capability to support the load
     Wi = []
@@ -217,19 +225,25 @@ else:
             Wi.append(Wr[i])
             He.append(Hr[i])
             NRc.append(Nrcfire[i])
-    Width = Wi[0]
-    Height = He[0]
-    NRcfire = NRc[0]
+    if len(Wi)>0:
+        Width = Wi[0]
+        Height = He[0]
+        NRcfire = NRc[0]
+        Utilization = F/NRcfire
+    else:
+        ErrorMessage='No profiles with selected citeria can support the load'
+
 
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
-End = rs.CurveEndPoint(CL)
-Start = rs.CurveStartPoint(CL)
-Vector = rs.VectorAdd(Start,End)
-Plane = rs.PlaneFromNormal(Start,Vector)
-CrossSection = rs.AddRectangle(Plane, Width, Height)
-#Translation vector center
-Vec1 =rs.VectorAdd([0,0,0],[-Width/2,-Height/2,0])
-Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
-rs.CapPlanarHoles(Geo)
+if NRcfire>F:
+    End = rs.CurveEndPoint(CL)
+    Start = rs.CurveStartPoint(CL)
+    Vector = rs.VectorAdd(Start,End)
+    Plane = rs.PlaneFromNormal(Start,Vector)
+    CrossSection = rs.AddRectangle(Plane, Width, Height)
+    #Translation vector center
+    Vec1 =rs.VectorAdd([0,0,0],[-Width/2,-Height/2,0])
+    Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
+    rs.CapPlanarHoles(Geo)
 
