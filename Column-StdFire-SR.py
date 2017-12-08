@@ -158,109 +158,130 @@ W = [x for x in W if x > bmin]
 H = [x for x in W if x > bmin]
 
 # Cross section after fire
-w = [] 
-h = []
-for i in range(len(W)):
-    if SEF==1:
-        w.append(W[i])
-        h.append(H[i]-dchar)
-    elif SEF==2:
-        w.append(W[i]-dchar)
-        h.append(H[i])
-    elif SEF==3:
-        w.append(W[i]-dchar)
-        h.append(H[i]-dchar)
-    elif SEF==4:
-        w.append(W[i]-2*dchar)
-        h.append(H[i]-dchar)
-    elif SEF==5:
-        w.append(W[i]-dchar)
-        h.append(H[i]-2*dchar)
-    elif SEF==6:
-        w.append(W[i])
-        h.append(H[i]-2*dchar)
-    elif SEF==7:
-        w.append(W[i]-2*dchar)
-        h.append(H[i])
-    elif SEF==8:
-        w.append(W[i]-2*dchar)
-        h.append(H[i]-2*dchar)
-
 wr = [] 
 hr = []
+for i in range(len(W)):
+    if SEF==1:
+        wr.append(W[i])
+        hr.append(H[i]-dchar)
+    elif SEF==2:
+        wr.append(W[i]-dchar)
+        hr.append(H[i])
+    elif SEF==3:
+        wr.append(W[i]-dchar)
+        hr.append(H[i]-dchar)
+    elif SEF==4:
+        wr.append(W[i]-2*dchar)
+        hr.append(H[i]-dchar)
+    elif SEF==5:
+        wr.append(W[i]-dchar)
+        hr.append(H[i]-2*dchar)
+    elif SEF==6:
+        wr.append(W[i])
+        hr.append(H[i]-2*dchar)
+    elif SEF==7:
+        wr.append(W[i]-2*dchar)
+        hr.append(H[i])
+    elif SEF==8:
+        wr.append(W[i]-2*dchar)
+        hr.append(H[i]-2*dchar)
+
 Wr = []
 Hr = []
-Ar = []
-for i in range(len(w)):
-    if w[i]>0 and h[i]>0:
-        wr.append(w[i])
-        hr.append(h[i])
-        Wr.append(W[i])
-        Hr.append(H[i])
-        # Area of cross section
-
+w = []
+h = []
+for i in range(len(wr)):
+    if wr[i]>0 and hr[i]>0:
+        Wr.append(wr[i])
+        Hr.append(hr[i])
+        w.append(W[i])
+        h.append(H[i])
 
 """-------------------------------------------------------------------------"""
 # Calculation of new moment of inertia
+# Area of 1 corner
+r = dchar
+Acr = r**2*(1-m.pi/4)
+# Moment of inertia corner
+Ir = 0.00742*r**4
+# Distance to center of gravity corner
+sr = 0.223*r
+
+Ar = []     #Area of cross section with rounded corners
+S = []      #Static moment about original axis
+Sh = []     #Static moment about original axis case 3
+Sw = []     #Static moment about original axis case 3
+drh = []     #Displacement of axis for corners
+drw = []     #Displacement of axis for corners
+Iysq = []   #Moment of inertia around z axis rectangle
+Izsq = []   #Moment of inertia around y axis rectangle
+Iycr = []   #Moment of inertia corner z axis corner
+Izcr = []   #Moment of inertia corner y axis corner
+Iytot = []  #Moment of inertia combined z axis total
+Iztot = []  #Moment of inertia combined y axis total
+Pr = []     #Perimeter
+
+
 # Sides exposed to fire
 # Width, Height, 2*Width, 2*Height same calculations
 if SEF==1 or SEF==2 or SEF==6 or SEF== 7:  
-    for i in range(len(W)):
-        Iytot.append(1/12*W[i]*H[i]**3)
-        Iztot.append(1/12*H[i]*W[i]**3)
-        Pr.append(2*W[i]+2*H[i])
-        Ar.append(W[i]*H[i])
+    for i in range(len(Wr)):
+        Iytot.append(1/12*Wr[i]*H[i]**3)
+        Iztot.append(1/12*Hr[i]*Wr[i]**3)
+        Pr.append(2*Wr[i]+2*Hr[i])
+        Ar.append(Wr[i]*Hr[i])
 # Width + Height
 elif SEF==3:
-    for i in range(len(W)):
-        A.append(W[i]*H[i]-Acr)
-        Sh.append(Acr*(H[i]/2-sr))
-        drh.append(Sh[i]/A[i])
-        Iysq.append(1/12*W[i]*(H[i]-2*drh[i])**3+1/12*W[i]*(2*drh[i])**3+W[i]*2*drh[i]*(H[i]/2)**2)
-        Iycr.append(Ir+Acr*((H[i]/2)+drh[i]-sr)**2)
+    for i in range(len(Wr)):
+        Ar.append(Wr[i]*Hr[i]-Acr)
+        Sh.append(Acr*(Hr[i]/2-sr))
+        drh.append(Sh[i]/Ar[i])
+        Iysq.append(1/12*Wr[i]*(Hr[i]-2*drh[i])**3+1/12*Wr[i]*(2*drh[i])**3+Wr[i]*2*drh[i]*(Hr[i]/2)**2)
+        Iycr.append(Ir+Acr*((Hr[i]/2)+drh[i]-sr)**2)
         Iytot.append(Iysq[i]-Iycr[i])
-        Sw.append(Acr*(W[i]/2-sr))
-        drw.append(Sw[i]/A[i])
-        Izsq.append(1/12*H[i]*(W[i]-2*drh[i])**3+1/12*H[i]*(2*drh[i])**3+H[i]*2*drh[i]*(W[i]/2)**2)
-        Iycr.append(Ir+Acr*((W[i]/2)+drw[i]-sr)**2)
+        Sw.append(Acr*(Wr[i]/2-sr))
+        drw.append(Sw[i]/Ar[i])
+        Izsq.append(1/12*Hr[i]*(Wr[i]-2*drh[i])**3+1/12*Hr[i]*(2*drh[i])**3+Hr[i]*2*drh[i]*(Wr[i]/2)**2)
+        Izcr.append(Ir+Acr*((Wr[i]/2)+drw[i]-sr)**2)
         Iztot.append(Izsq[i]-Izcr[i])
-        Pr.append(H[i]+(H[i]-r)+W[i]+(W[i]-r)+(m.pi*r*2)/4)
-        Ar.append(H[i]*W[i]-Acr)
+        Pr.append(Hr[i]+(Hr[i]-r)+Wr[i]+(Wr[i]-r)+(m.pi*r*2)/4)
+
 # Width + 2*Height 
 elif SEF==4: 
     for i in range(len(W)):
-        A.append(W[i]*H[i]-2*Acr)
-        S.append(2*Acr*(H[i]/2-sr))
-        dr.append(S[i]/A[i])
-        Iysq.append(1/12*W[i]*(H[i]-2*dr[i])**3+1/12*W[i]*(2*dr[i])**3+W[i]*2*dr[i]*(H[i]/2)**2)
-        Iycr.append(2*Ir+2*Acr*((H[i]/2)+dr[i]-0.223*r)**2)
+        Ar.append(Wr[i]*Hr[i]-2*Acr)
+        S.append(2*Acr*(Hr[i]/2-sr))
+        drh.append(S[i]/Ar[i])
+        Iysq.append(1/12*Wr[i]*(Hr[i]-2*drh[i])**3+1/12*Wr[i]*(2*drh[i])**3+Wr[i]*2*drh[i]*(Hr[i]/2)**2)
+        Iycr.append(2*Ir+2*Acr*((Hr[i]/2)+drh[i]-0.223*r)**2)
         Iytot.append(Iysq[i]-Iycr[i])
-        Izsq.append((1/12*H[i]*W[i]**3))
-        Izcr.append(2*Ir+2*Acr*((W[i]/2)-0.223*r)**2)
+        Izsq.append((1/12*Hr[i]*Wr[i]**3))
+        Izcr.append(2*Ir+2*Acr*((Wr[i]/2)-0.223*r)**2)
         Iztot.append(Izsq[i]-Izcr[i])
-        Pr.append((W[i])+2*(H[i]-r)+(W[i]-2*r)+(2*(m.pi*r*2)/4))
-        Ar.append(W[i]*H[i]-2*Acr)
+        Pr.append((Wr[i])+2*(Hr[i]-r)+(Wr[i]-2*r)+(2*(m.pi*r*2)/4))
+
 # 2*Width + Height
 elif SEF==5:
-    for i in range(len(W)):
-        A.append(H[i]*W[i]-2*Acr)
-        S.append(2*Acr*(W[i]/2-sr))
-        dr.append(S[i]/A[i])
-        Iysq.append(1/12*H[i]*(W[i]-2*dr[i])**3+1/12*H[i]*(2*dr[i])**3+H[i]*2*dr[i]*(W[i]/2)**2)
-        Iycr.append(2*Ir+2*Acr*((W[i]/2)+dr[i]-0.223*r)**2)
+    for i in range(len(Wr)):
+        Ar.append(Hr[i]*Wr[i]-2*Acr)
+        S.append(2*Acr*(Wr[i]/2-sr))
+        drw.append(S[i]/Ar[i])
+        Iysq.append(1/12*Hr[i]*(Wr[i]-2*drw[i])**3+1/12*Hr[i]*(2*drw[i])**3+Hr[i]*2*drw[i]*(Wr[i]/2)**2)
+        Iycr.append(2*Ir+2*Acr*((Wr[i]/2)+drw[i]-0.223*r)**2)
         Iytot.append(Iysq-Iycr)
-        Izsq.append((1/12*W[i]*H[i]**3))
-        Izcr.append(2*Ir+2*Acr*((H[i]/2)-0.223*r)**2)
+        Izsq.append((1/12*Wr[i]*Hr[i]**3))
+        Izcr.append(2*Ir+2*Acr*((Hr[i]/2)-0.223*r)**2)
         Iztot.append(Izsq-Izcr)
-        Pr.append((H[i]+2*(W[i]-r)+(H[i]-2*r)+(2*(m.pi*r*2)/4)))
-        Ar.append(H[i]*W[i]-2*Acr)
+        Pr.append((Hr[i]+2*(Wr[i]-r)+(Hr[i]-2*r)+(2*(m.pi*r*2)/4)))
+
 # 2*Width + 2*Height
 elif SEF==8: 
-    for i in range(len(W)):
-        Iytot.append(1/12*W[i]*H[i]**3-r**2*(4-m.pi)*(H[i]/2-sr)**2-4*Ir)
-        Iztot.append(1/12*H[i]*W[i]**3-r**2*(4-m.pi)*(W[i]/2-sr)**2-4*Ir)
-        Pr.append(2*(H[i]-2*r)+2*(W[i]-2*r)+m.pi*r*2)
-        Ar.append(W[i]*H[i]-4*Acr)
+    for i in range(len(Wr)):
+        Ar.append(Wr[i]*Hr[i]-4*Acr)
+        Iytot.append(1/12*Wr[i]*Hr[i]**3-r**2*(4-m.pi)*(Hr[i]/2-sr)**2-4*Ir)
+        Iztot.append(1/12*Hr[i]*Wr[i]**3-r**2*(4-m.pi)*(Wr[i]/2-sr)**2-4*Ir)
+        Pr.append(2*(Hr[i]-2*r)+2*(Wr[i]-2*r)+m.pi*r*2)
+
 else:
     print('You are doing something wrong')
 Iy=Iytot
@@ -273,11 +294,25 @@ ls = rs.CurveLength(CL)
 
 # Checking for weakest axis
 I = []
-for i in range(len(wr)):
-    if hr[i]>wr[i]:
+for i in range(len(Wr)):
+    if Hr[i]>Wr[i]:
         I.append(Iz[i])
     else:
         I.append(Iy[i])
+
+C =[]       # Reduction factor for compression strength
+F = []      # Reduction factor for flexural strength
+TS = []     # Reduction factor for tensile and shear strength
+
+for i in range(len(Pr)):
+    if t<20:
+        C.append(1-1/125*Pr[i]/Ar[i]*t/20)
+        F.append(1-1/200*Pr[i]/Ar[i]*t/20)
+        TS.append(1-1/330*Pr[i]/Ar[i]*t/20)
+    else:
+        C.append(1-1/125*Pr[i]/Ar[i])
+        F.append(1-1/200*Pr[i]/Ar[i])
+        TS.append(1-1/330*Pr[i]/Ar[i])
 
 Lambda = []
 SigmaE = []  
@@ -287,7 +322,7 @@ kfire = []
 kc = []
 Nrcfire = []
 
-for i in range(len(wr)):
+for i in range(len(Wr)):
     #Slenderness ratio
     Lambda.append(ls/m.sqrt(I[i]/Ar[i]))
     #Euler stress
@@ -320,10 +355,10 @@ else:
     Wi = []
     He = []
     NRc =[]
-    for i in range(len(wr)):
+    for i in range(len(Wr)):
         if Nrcfire[i]>F:
-            Wi.append(Wr[i])
-            He.append(Hr[i])
+            Wi.append(w[i])
+            He.append(h[i])
             NRc.append(Nrcfire[i])
     if len(Wi)>0:
         Width = Wi[0]
