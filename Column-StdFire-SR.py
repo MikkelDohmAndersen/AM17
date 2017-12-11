@@ -13,7 +13,7 @@ Column - Standard fire with reduced cross section method
         t: Time of exposure in minutes
         SEF: Sides Exposed to Fire(1=Width, 2=Height, 3=Width+Height, 4=Width+2*Height, 5=2*Width+Height, 6=2*Width, 7=2*Height, 8=All
     Returns:
-        NRc,fire: Charateristic resistance of the column after fire
+        NRc,fire: Charateristic resistance of the column after fire [kN]
         Width: Width of the cross section before fire
         Height: Height of the cross section before fire
         Geo: 3D model of the cross section
@@ -226,14 +226,15 @@ Pr = []     #Perimeter
 # Width, Height, 2*Width, 2*Height same calculations
 if SEF==1 or SEF==2 or SEF==6 or SEF== 7:  
     for i in range(len(Wr)):
-        Iytot.append(1/12*Wr[i]*H[i]**3)
+        Iytot.append(1/12*Wr[i]*Hr[i]**3)
         Iztot.append(1/12*Hr[i]*Wr[i]**3)
         Pr.append(2*Wr[i]+2*Hr[i])
         Ar.append(Wr[i]*Hr[i])
+
 # Width + Height
 elif SEF==3:
     for i in range(len(Wr)):
-        Ar.append(Wr[i]*Hr[i]-Acr)
+        Ar.append((Wr[i]*Hr[i])-Acr)
         Sh.append(Acr*(Hr[i]/2-sr))
         drh.append(Sh[i]/Ar[i])
         Iysq.append(1/12*Wr[i]*(Hr[i]-2*drh[i])**3+1/12*Wr[i]*(2*drh[i])**3+Wr[i]*2*drh[i]*(Hr[i]/2)**2)
@@ -248,15 +249,15 @@ elif SEF==3:
 
 # Width + 2*Height 
 elif SEF==4: 
-    for i in range(len(W)):
+    for i in range(len(Wr)):
         Ar.append(Wr[i]*Hr[i]-2*Acr)
         S.append(2*Acr*(Hr[i]/2-sr))
         drh.append(S[i]/Ar[i])
         Iysq.append(1/12*Wr[i]*(Hr[i]-2*drh[i])**3+1/12*Wr[i]*(2*drh[i])**3+Wr[i]*2*drh[i]*(Hr[i]/2)**2)
-        Iycr.append(2*Ir+2*Acr*((Hr[i]/2)+drh[i]-0.223*r)**2)
+        Iycr.append(2*Ir+2*Acr*((Hr[i]/2)+drh[i]-sr)**2)
         Iytot.append(Iysq[i]-Iycr[i])
         Izsq.append((1/12*Hr[i]*Wr[i]**3))
-        Izcr.append(2*Ir+2*Acr*((Wr[i]/2)-0.223*r)**2)
+        Izcr.append(2*Ir+2*Acr*((Wr[i]/2)-sr)**2)
         Iztot.append(Izsq[i]-Izcr[i])
         Pr.append((Wr[i])+2*(Hr[i]-r)+(Wr[i]-2*r)+(2*(m.pi*r*2)/4))
 
@@ -267,11 +268,11 @@ elif SEF==5:
         S.append(2*Acr*(Wr[i]/2-sr))
         drw.append(S[i]/Ar[i])
         Iysq.append(1/12*Hr[i]*(Wr[i]-2*drw[i])**3+1/12*Hr[i]*(2*drw[i])**3+Hr[i]*2*drw[i]*(Wr[i]/2)**2)
-        Iycr.append(2*Ir+2*Acr*((Wr[i]/2)+drw[i]-0.223*r)**2)
-        Iytot.append(Iysq-Iycr)
+        Iycr.append(2*Ir+2*Acr*((Wr[i]/2)+drw[i]-sr)**2)
+        Iytot.append(Iysq[i]-Iycr[i])
         Izsq.append((1/12*Wr[i]*Hr[i]**3))
-        Izcr.append(2*Ir+2*Acr*((Hr[i]/2)-0.223*r)**2)
-        Iztot.append(Izsq-Izcr)
+        Izcr.append(2*Ir+2*Acr*((Hr[i]/2)-sr)**2)
+        Iztot.append(Izsq[i]-Izcr[i])
         Pr.append((Hr[i]+2*(Wr[i]-r)+(Hr[i]-2*r)+(2*(m.pi*r*2)/4)))
 
 # 2*Width + 2*Height
@@ -316,7 +317,8 @@ for i in range(len(Pr)):
 
 Lambda = []
 SigmaE = []  
-kE = []  
+kmod1 = []  
+kmod2 = []
 Lambdarel = [] 
 kfire = []
 kc = []
@@ -326,9 +328,7 @@ for i in range(len(Wr)):
     #Slenderness ratio
     Lambda.append(ls/m.sqrt(I[i]/Ar[i]))
     #Euler stress
-    SigmaE.append(m.pi**2*(E/fc))
-    #Euler factor
-    kE.append(SigmaE[i]/fc)
+    SigmaE.append(m.pi**2*((E*TS[i])/(fc*C[i])))
     #Relative slenderness ratio
     Lambdarel.append(Lambda[i]/m.sqrt(SigmaE[i]))
     #kfire coefficient
