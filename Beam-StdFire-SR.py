@@ -1,21 +1,21 @@
 ﻿"""
-Column - Standard fire with reduced cross section method
+Beam - Standard fire with strength reduction method
 
     Args:
-        CL: Center Line for column [mm]
-        F: Uniformly distributed load,[kN/m], for the beam to support
-        Str: Strength class for the wood (C30, C24, C18, C14, GL32h, GL28h or GL24h)
-        Sup: Support conditions for the column (1=Simply supported both ends, 2=One end fixed and one end not supported, 3=One end fixed and one end simply supported, 4=Both ends fixed
-        ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber) standard profiles.
-        WidthProfile: Width of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated on ToW.
-        HeightProfile: Height of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated on ToW.
-        WS: Wood Species (1=Conifer p>290 kg/m3, 2=Laminated wood p>290 kg/m3 , 3=Hardwood p>450 kg/m3
-        t: Time of exposure in minutes
-        SEF: Sides Exposed to Fire(1=Width, 2=Height, 3=Width+Height, 4=Width+2*Height, 5=2*Width+Height, 6=2*Width, 7=2*Height, 8=All
+        CL: Center Line for column
+        F: Vertical load,N, for the column to support (Calculated as a centrally placed load, also in the case when the column's center of gravity moves)
+        Str: Strength class for the wood (C30, C24, C18, C14, GL32h, GL28h or GL24h)[Default: 24C]
+        Sup: Support conditions for the column (1=Simply supported both ends, 2=One end fixed and one end not supported, 3=One end fixed and one end simply supported, 4=Both ends fixed [Default: Simply supported]
+        ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber) standard profiles [Default: sawn]
+        WidthProfile: Width of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated based on ToW.
+        HeightProfile: Height of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated based on ToW.
+        WS: Wood Species (1=Conifer p>290 kg/m3, 2=Laminated wood p>290 kg/m3 , 3=Hardwood p>450 kg/m3 [Default: Conifer]
+        t: Time of exposure in minutes [Default 60]
+        SEF: Sides Exposed to Fire(1=Width, 2=Height, 3=Width+Height, 4=Width+2*Height, 5=2*Width+Height, 6=2*Width, 7=2*Height, 8=All [Default: Width+2*Height]
     Returns:
-        Sigmafire: Flexural stress [MPa)
-        Width: Width [mm] of the cross section before fire
-        Height: Height [mm] of the cross section before fire
+        NRc,fire: Charateristic resistance of the column after fire [kN]
+        Width: Width of the cross section before fire [mm]
+        Height: Height of the cross section before fire [mm]
         Geo: 3D model of the cross section
         Utilization: Utilization rate [%]
         ErrorMessage: Check this output for error messages
@@ -26,6 +26,25 @@ import math as m
 
 """-------------------------------------------------------------------------"""
 # USER INPUTS
+StrDef = 'c24'
+SupDef = 1
+ToWDef = 'sawn'
+WSDef = 1
+tDef = 60
+SEFDef = 4
+
+if not Str:
+    Str=StrDef
+if not Sup:
+    Sup=SupDef
+if not ToW:
+    ToW=ToWDef
+if not WS:
+    WS=WSDef
+if not t:
+    t=tDef
+if not SEF:
+    SEF=SEFDef
 # Support conditions
 L=rs.CurveLength(CL)
 if Sup==1:
