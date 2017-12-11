@@ -301,19 +301,19 @@ for i in range(len(Wr)):
     else:
         I.append(Iy[i])
 
-C =[]       # Reduction factor for compression strength
-F = []      # Reduction factor for flexural strength
-TS = []     # Reduction factor for tensile and shear strength
+CStr =[]       # Reduction factor for compression strength
+FStr = []      # Reduction factor for flexural strength
+EStr = []     # Reduction factor for tensile and shear strength
 
 for i in range(len(Pr)):
     if t<20:
-        C.append(1-1/125*Pr[i]/Ar[i]*t/20)
-        F.append(1-1/200*Pr[i]/Ar[i]*t/20)
-        TS.append(1-1/330*Pr[i]/Ar[i]*t/20)
+        CStr.append(1-1/125*Pr[i]/Ar[i]*t/20)
+        FStr.append(1-1/200*Pr[i]/Ar[i]*t/20)
+        EStr.append(1-1/330*Pr[i]/Ar[i]*t/20)
     else:
-        C.append(1-1/125*Pr[i]/Ar[i])
-        F.append(1-1/200*Pr[i]/Ar[i])
-        TS.append(1-1/330*Pr[i]/Ar[i])
+        CStr.append(1-1/125*Pr[i]/Ar[i])
+        FStr.append(1-1/200*Pr[i]/Ar[i])
+        EStr.append(1-1/330*Pr[i]/Ar[i])
 
 Lambda = []
 SigmaE = []  
@@ -328,7 +328,7 @@ for i in range(len(Wr)):
     #Slenderness ratio
     Lambda.append(ls/m.sqrt(I[i]/Ar[i]))
     #Euler stress
-    SigmaE.append(m.pi**2*((E*TS[i])/(fc*C[i])))
+    SigmaE.append(m.pi**2*((E*EStr[i])/(fc*CStr[i])))
     #Relative slenderness ratio
     Lambdarel.append(Lambda[i]/m.sqrt(SigmaE[i]))
     #kfire coefficient
@@ -349,7 +349,6 @@ if Input==0:
         Utilization = F/NRcfire[0]
     else:
         ErrorMessage='No profiles with selected citeria can support the load'
-
 else:
 # Selecting the smallest profile with capability to support the load
     Wi = []
@@ -367,7 +366,7 @@ else:
         Utilization = F/NRcfire
     else:
         ErrorMessage='No profiles with selected citeria can support the load'
-
+print 
 
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
