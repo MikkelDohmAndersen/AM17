@@ -170,134 +170,146 @@ else:
 dchar = Bn*t+dpy
 
 # Cross section after fire
-w = [] 
-h = []
-for i in range(len(W)):
-    if SEF==1:
-        w.append(W[i])
-        h.append(H[i]-dchar)
-    elif SEF==2:
-        w.append(W[i]-dchar)
-        h.append(H[i])
-    elif SEF==3:
-        w.append(W[i]-dchar)
-        h.append(H[i]-dchar)
-    elif SEF==4:
-        w.append(W[i]-2*dchar)
-        h.append(H[i]-dchar)
-    elif SEF==5:
-        w.append(W[i]-dchar)
-        h.append(H[i]-2*dchar)
-    elif SEF==6:
-        w.append(W[i])
-        h.append(H[i]-2*dchar)
-    elif SEF==7:
-        w.append(W[i]-2*dchar)
-        h.append(H[i])
-    elif SEF==8:
-        w.append(W[i]-2*dchar)
-        h.append(H[i]-2*dchar)
-
 wr = [] 
 hr = []
-Wr = []
+for i in range(len(W)):
+    if SEF==1:
+        wr.append(W[i])
+        hr.append(H[i]-dchar)
+    elif SEF==2:
+        wr.append(W[i]-dchar)
+        hr.append(H[i])
+    elif SEF==3:
+        wr.append(W[i]-dchar)
+        hr.append(H[i]-dchar)
+    elif SEF==4:
+        wr.append(W[i]-2*dchar)
+        hr.append(H[i]-dchar)
+    elif SEF==5:
+        wr.append(W[i]-dchar)
+        hr.append(H[i]-2*dchar)
+    elif SEF==6:
+        wr.append(W[i])
+        hr.append(H[i]-2*dchar)
+    elif SEF==7:
+        wr.append(W[i]-2*dchar)
+        hr.append(H[i])
+    elif SEF==8:
+        wr.append(W[i]-2*dchar)
+        hr.append(H[i]-2*dchar)
+
+Wr = [] 
 Hr = []
+w = []
+h = []
 Ar = []
-for i in range(len(w)):
-    if w[i]>0 and h[i]>0:
-        wr.append(w[i])
-        hr.append(h[i])
-        Wr.append(W[i])
-        Hr.append(H[i])
-        # Area of cross section
-        Ar.append(w[i]*h[i])
+
+for i in range(len(wr)):
+    if wr[i]>0 and hr[i]>0:
+        Wr.append(wr[i])
+        Hr.append(hr[i])
+        w.append(W[i])
+        h.append(H[i])
+        Ar.append(wr[i]*hr[i])
 
 """-------------------------------------------------------------------------"""
 # Calculation of new moment of inertia
 Iy = []
 Iz = []
-for i in range(len(wr)):
-    Iy.append(1/12*wr[i]*hr[i]**3)
-    Iz.append(1/12*hr[i]*wr[i]**3)
+for i in range(len(Wr)):
+    Iy.append(1/12*Wr[i]*Hr[i]**3)
+    Iz.append(1/12*Hr[i]*Wr[i]**3)
 """-------------------------------------------------------------------------"""
 
 # Verification of wooden column (Calculation of NRc,fire)
 # Critical buckling length
-ls = rs.CurveLength(CL)
+L = []
+ls = []
+for i in range(len(CL)):
+    L.append(rs.CurveLength(CL[i]))
+    ls.append(L[i]*l0)
 
 # Checking for weakest axis
 I = []
-for i in range(len(wr)):
-    if hr[i]>wr[i]:
+for i in range(len(Wr)):
+    if Hr[i]>wr[i]:
         I.append(Iz[i])
     else:
         I.append(Iy[i])
 
 Lambda = []
 SigmaE = []  
-kE = []  
 Lambdarel = [] 
 kfire = []
 kc = []
-Nrcfire = []
-
-for i in range(len(wr)):
-    #Slenderness ratio
-    Lambda.append(ls/m.sqrt(I[i]/Ar[i]))
-    #Euler stress
-    SigmaE.append(m.pi**2*(E/fc))
-    #Euler factor
-    kE.append(SigmaE[i]/fc)
-    #Relative slenderness ratio
-    Lambdarel.append(Lambda[i]/m.sqrt(SigmaE[i]))
-    #kfire coefficient
-    kfire.append(0.5*(1+Bc*(Lambdarel[i]-0.5)+Lambdarel[i]**2))
-    #Critical buckling factor
-    if Lambdarel[i]<0.5:
-        kc.append(1.0)
+Width = []
+Height = []
+NRcfire = []
+Utilization = []
+for i in range(len(CL)):
+    nrcfire = []
+    for j in range(len(Wr)):
+        #Slenderness ratio
+        Lambda.append(ls[i]/m.sqrt(I[j]/Ar[j]))
+        #Euler stress
+        SigmaE.append(m.pi**2*(E/fc))
+        #Relative slenderness ratio
+        Lambdarel.append(Lambda[j]/m.sqrt(SigmaE[j]))
+        #kfire coefficient
+        kfire.append(0.5*(1+Bc*(Lambdarel[j]-0.5)+Lambdarel[j]**2))
+        #Critical buckling factor
+        if Lambdarel[j]<0.5:
+            kc.append(1.0)
+        else:
+            kc.append(1/(kfire[j]+m.sqrt(kfire[j]**2-Lambdarel[j]**2)))
+        #Characteristic resistance of wood
+        nrcfire.append(Ar[j]*fc*kc[j])
+    if Input==0:
+        if nrcfire>F:
+            Width.append(WidthProfile)
+            Height.append(HeightProfile)
+            NRcfire.append(nrcfire[0])
+            Utilization.append(F[i]/NRcfire[0])
+        else:
+            ErrorMessage='No profiles with selected citeria can support the load'
     else:
-        kc.append(1/(kfire[i]+m.sqrt(kfire[i]**2-Lambdarel[i]**2)))
-    #Characteristic resistance of wood
-    Nrcfire.append(Ar[i]*fc*kc[i])
-
-if Input==0:
-    if Nrcfire>F:
-        Width = WidthProfile
-        Height = HeightProfile
-        NRcfire = Nrcfire
-        Utilization = F/NRcfire[0]
-    else:
-        ErrorMessage='No profiles with selected citeria can support the load'
-
-else:
-# Selecting the smallest profile with capability to support the load
-    Wi = []
-    He = []
-    NRc =[]
-    for i in range(len(wr)):
-        if Nrcfire[i]>F:
-            Wi.append(Wr[i])
-            He.append(Hr[i])
-            NRc.append(Nrcfire[i])
-    if len(Wi)>0:
-        Width = Wi[0]
-        Height = He[0]
-        NRcfire = NRc[0]
-        Utilization = F/NRcfire
-    else:
-        ErrorMessage='No profiles with selected citeria can support the load'
-
+    # Selecting the smallest profile with capability to support the load
+        Wi = []
+        He = []
+        NRc = []
+        for j in range(len(Wr)):
+            if nrcfire[j]>F[i]:
+                Wi.append(w[j])
+                He.append(h[j])
+                NRc.append(nrcfire[j])
+        if len(Wi)>0:
+            Width.append(Wi[0])
+            Height.append(He[0])
+            NRcfire.append(NRc[0])
+            Utilization.append(F[i]/NRcfire[i])
+        else:
+            ErrorMessage='No profiles with selected citeria can support the load'
 
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
-if NRcfire>F:
-    End = rs.CurveEndPoint(CL)
-    Start = rs.CurveStartPoint(CL)
-    Vector = rs.VectorAdd(Start,End)
-    Plane = rs.PlaneFromNormal(Start,Vector)
-    CrossSection = rs.AddRectangle(Plane, Width, Height)
-    #Translation vector center
-    Vec1 =rs.VectorAdd([0,0,0],[-Width/2,-Height/2,0])
-    Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
-    rs.CapPlanarHoles(Geo)
+End = []
+Start = []
+Vector = []
+Plane = []
+CrossSection = []
+Geo1 = []
+Geo = []
+Line = []
+Cl = CL[0]
 
+for i in range(len(NRcfire)):
+    if NRcfire[i]>F[i]:
+        End = rs.CurveEndPoint(Cl)
+        Start = rs.CurveStartPoint(Cl)
+        Vector = rs.VectorAdd(Start,End)
+        Plane = rs.PlaneFromNormal(Start,Vector)
+        for i in range(len(CL)):
+            CrossSection.append(rs.AddRectangle(Plane, Height[i], Width[i]))
+            Geo1.append(rs.MoveObject(rs.ExtrudeCurve(CrossSection[i],CL[i]),rs.CurveStartPoint(CL[i])))
+            Geo.append(rs.MoveObject(Geo1[i],[(-Width[i]/2)/10,0,(-Height[i]/2)/10]))
+            rs.CapPlanarHoles(Geo[i])
