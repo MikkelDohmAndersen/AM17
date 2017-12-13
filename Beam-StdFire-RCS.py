@@ -45,17 +45,6 @@ if not t:
     t=tDef
 if not SEF:
     SEF=SEFDef
-# Support conditions
-L=rs.CurveLength(CL)
-if Sup==1:
-    Mmax=1/8*F*L**2
-elif Sup==2:
-    Mmax=1/2*F*L**2
-elif Sup==3:
-    Mmax=9/128*F*L**2
-elif Sup==4:
-    Mmax=1/8*F*L**2
-
 
 # Strength class
 if str.upper(Str)=='C30':
@@ -216,51 +205,81 @@ for i in range(len(wr)):
     Iz.append(1/12*hr[i]*wr[i]**3)
 
 """-------------------------------------------------------------------------"""
+# Support conditions
+L = []
+Mmax = []
+for i in range(len(CL)):
+    L.append(rs.CurveLength(CL[i]))
+    if Sup==1:
+        Mmax.append(1/8*F[i]*L[i]**2)
+    elif Sup==2:
+        Mmax.append(1/2*F[i]*L[i]**2)
+    elif Sup==3:
+        Mmax.append(9/128*F[i]*L[i]**2)
+    elif Sup==4:
+        Mmax.append(1/8*F[i]*L[i]**2)
 
 # Verification of wooden beam 
-sigmafire = []
-for i in range(len(Wr)):
-    sigmafire.append(Mmax/Iy[i]*Hr[i]/2)
+Width = []
+Height = []
+Utilization = []
+Sigmafire = []
 
-if Input==0:
-    if 0<sigmafire[i]<fm:
-       Width = WidthProfile
-       Height = HeightProfile
-       Sigmafire = sigmafire[0]
-       Utilization = Sigmafire/fm*100
+for i in range(len(Mmax)):
+    sigmafire = []
+    for j in range(len(Wr)):
+        sigmafire.append(Mmax[i]/Iy[j]*Hr[j]/2)
+    if Input==0:
+        if 0<sigmafire[j]<fm:
+           Width.append(WidthProfile)
+           Height.append(HeightProfile)
+           Sigmafire.append(sigmafire[0])
+           Utilization.append(Sigmafire[i]/fm*100)
+        else:
+            ErrorMessage='No profiles with selected citeria can support the load'
     else:
-        ErrorMessage='No profiles with selected citeria can support the load'
-else:
-    # Selecting the smallest profile with capability to support the load
-    Wi = []
-    He = []
-    fmfire =[]
-    for i in range(len(wr)):
-        if 0<sigmafire[i]<fm:
-            Wi.append(Wr[i])
-            He.append(Hr[i])
-            fmfire.append(sigmafire[i])
-    if len(Wi)>0:
-        Width = Wi[0]
-        Height = He[0]
-        Sigmafire = fmfire[0]
-        Utilization = Sigmafire/fm*100
-    else:
-        ErrorMessage='No profiles with selected citeria can support the load'
-
+        # Selecting the smallest profile with capability to support the load
+        Wi = []
+        He = []
+        fmfire =[]
+        for j in range(len(wr)):
+            if 0<sigmafire[j]<fm:
+                Wi.append(Wr[j])
+                He.append(Hr[j])
+                fmfire.append(sigmafire[j])
+        if len(Wi)>0:
+            Width.append(Wi[0])
+            Height.append(He[0])
+            Sigmafire.append(fmfire[0])
+            Utilization.append(Sigmafire[i]/fm*100)
+        else:
+            ErrorMessage='No profiles with selected citeria can support the load'
 
 
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
-if Sigmafire>fm:
-    End = rs.CurveEndPoint(CL)
-    Start = rs.CurveStartPoint(CL)
-    Vector = rs.VectorAdd(Start,End)
-    Plane = rs.PlaneFromNormal(Start,Vector)
-    CrossSection = rs.AddRectangle(Plane, Height, Width)
-    #Translation vector center
-    Vec1 =rs.VectorAdd([0,0,0],[-Width/2,0,-Height/2])
-    Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
-    rs.CapPlanarHoles(Geo)
+End = []
+Start = []
+Vector = []
+Plane = []
+CrossSection = []
+Geo1 = []
+Geo = []
+Line = []
+Cl = CL[0]
+
+for i in range(len(Sigmafire)):
+    if Sigmafire[i]<fm:
+        End = rs.CurveEndPoint(Cl)
+        Start = rs.CurveStartPoint(Cl)
+        Vector = rs.VectorAdd(Start,End)
+        Plane = rs.PlaneFromNormal(Start,Vector)
+        for i in range(len(CL)):
+            CrossSection.append(rs.AddRectangle(Plane, Height[i], Width[i]))
+            Geo1.append(rs.MoveObject(rs.ExtrudeCurve(CrossSection[i],CL[i]),rs.CurveStartPoint(CL[i])))
+            Geo.append(rs.MoveObject(Geo1[i],[(-Width[i]/2)/10,0,(-Height[i]/2)/10]))
+            rs.CapPlanarHoles(Geo[i])
+
+
 
 
