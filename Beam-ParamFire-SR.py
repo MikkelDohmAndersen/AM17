@@ -58,18 +58,6 @@ if not q:
 if not Ti:
     Ti=TiDef
 
-# Support conditions
-L=rs.CurveLength(CL)
-if Sup==1:
-    Mmax=1/8*F*L**2
-elif Sup==2:
-    Mmax=1/2*F*L**2
-elif Sup==3:
-    Mmax=9/128*F*L**2
-elif Sup==4:
-    Mmax=1/8*F*L**2
-
-
 # Strength class
 if str.upper(Str)=='C30':
     fm=30
@@ -234,8 +222,8 @@ Ar = []     #Area of cross section with rounded corners
 S = []      #Static moment about original axis
 Sh = []     #Static moment about original axis case 3
 Sw = []     #Static moment about original axis case 3
-drh = []     #Displacement of axis for corners
-drw = []     #Displacement of axis for corners
+drh = []    #Displacement of axis for corners
+drw = []    #Displacement of axis for corners
 Iysq = []   #Moment of inertia around z axis rectangle
 Izsq = []   #Moment of inertia around y axis rectangle
 Iycr = []   #Moment of inertia corner z axis corner
@@ -313,49 +301,82 @@ Iz=Iztot
 
 """-------------------------------------------------------------------------"""
 # Verification of wooden beam 
-sigmafire = []
-for i in range(len(Wr)):
-    sigmafire.append(Mmax/Iy[i]*Hr[i]/2)
+# Support conditions
+L = []
+Mmax = []
+for i in range(len(CL)):
+    L.append(rs.CurveLength(CL[i]))
+    if Sup==1:
+        Mmax.append(1/8*F[i]*L[i]**2)
+    elif Sup==2:
+        Mmax.append(1/2*F[i]*L[i]**2)
+    elif Sup==3:
+        Mmax.append(9/128*F[i]*L[i]**2)
+    elif Sup==4:
+        Mmax.append(1/8*F[i]*L[i]**2)
 
-if Input==0:
-    if 0<sigmafire[i]<fm:
-       Width = WidthProfile
-       Height = HeightProfile
-       Sigmafire = sigmafire[0]
-       Utilization = Sigmafire/fm*100
+FStr = []      # Reduction factor for flexural strength
+for i in range(len(Pr)):
+    if t<20:
+        FStr.append(1-1/200*Pr[i]/Ar[i]*t/20)
     else:
-        ErrorMessage='No profiles with selected citeria can support the load'
-else:
-    # Selecting the smallest profile with capability to support the load
-    Wi = []
-    He = []
-    fmfire = []
-    for i in range(len(Wr)):
-        if 0<sigmafire[i]<fm:
-            Wi.append(w[i])
-            He.append(h[i])
-            fmfire.append(sigmafire[i])
-    if len(Wi)>0:
-        Width = Wi[0]
-        Height = He[0]
-        Sigmafire = fmfire[0]
-        Utilization = Sigmafire/fm*100
+        FStr.append(1-1/200*Pr[i]/Ar[i])
+
+Width = []
+Height = []
+Utilization = []
+Sigmafire = []
+for i in range(len(Mmax)):
+    sigmafire = []
+    for j in range(len(Wr)):
+        sigmafire.append(Mmax[i]/Iy[j]*Hr[j]/2*FStr[j])
+    if Input==0:
+        if 0<sigmafire[j]<fm:
+           Width.append(WidthProfile)
+           Height.append(HeightProfile)
+           Sigmafire.append(sigmafire[0])
+           Utilization.append(Sigmafire[i]/fm*100)
+        else:
+            ErrorMessage='No profiles with selected citeria can support the load'
     else:
-        ErrorMessage='No profiles with selected citeria can support the load'
-
-
+        # Selecting the smallest profile with capability to support the load
+        Wi = []
+        He = []
+        fmfire =[]
+        for j in range(len(Wr)):
+            if 0<sigmafire[j]<fm:
+                Wi.append(Wr[j])
+                He.append(Hr[j])
+                fmfire.append(sigmafire[j])
+        if len(Wi)>0:
+            Width.append(Wi[0])
+            Height.append(He[0])
+            Sigmafire.append(fmfire[0])
+            Utilization.append(Sigmafire[i]/fm*100)
+        else:
+            ErrorMessage='No profiles with selected citeria can support the load'
 
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
-if Sigmafire>fm:
-    End = rs.CurveEndPoint(CL)
-    Start = rs.CurveStartPoint(CL)
-    Vector = rs.VectorAdd(Start,End)
-    Plane = rs.PlaneFromNormal(Start,Vector)
-    CrossSection = rs.AddRectangle(Plane, Height, Width)
-    #Translation vector center
-    Vec1 =rs.VectorAdd([0,0,0],[-Width/2,0,-Height/2])
-    Geo = rs.MoveObject(rs.ExtrudeCurve(CrossSection,CL),Vec1)
-    rs.CapPlanarHoles(Geo)
+End = []
+Start = []
+Vector = []
+Plane = []
+CrossSection = []
+Geo1 = []
+Geo = []
+Line = []
+Cl = CL[0]
 
+for i in range(len(Sigmafire)):
+    if Sigmafire[i]<fm:
+        End = rs.CurveEndPoint(Cl)
+        Start = rs.CurveStartPoint(Cl)
+        Vector = rs.VectorAdd(Start,End)
+        Plane = rs.PlaneFromNormal(Start,Vector)
+        for i in range(len(CL)):
+            CrossSection.append(rs.AddRectangle(Plane, Height[i], Width[i]))
+            Geo1.append(rs.MoveObject(rs.ExtrudeCurve(CrossSection[i],CL[i]),rs.CurveStartPoint(CL[i])))
+            Geo.append(rs.MoveObject(Geo1[i],[(-Width[i]/2)/10,0,(-Height[i]/2)/10]))
+            rs.CapPlanarHoles(Geo[i])
 
