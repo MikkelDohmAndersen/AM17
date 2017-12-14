@@ -8,3 +8,4 @@ How to install the plugin FireAnt
 
 4# The tab "FireAnt" should now be available as every other plugin and you are ready to use FireAnt
 
+This plugin has not been verified. For any real life application a full and detailed verification of the structure should always be done.
