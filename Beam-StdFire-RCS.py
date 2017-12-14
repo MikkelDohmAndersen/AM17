@@ -1,19 +1,21 @@
 ﻿"""
-Beam - Standard fire with reduced cross section method
+Calculation and selection of the smallest standard or user defined cross section for a wooden beam that can support the given load during a standard fire using the reduced cross section method
+
+Created by Mikkel Dohm Andersen, DTU.BYG
 
     Args:
         CL: Center Line for column
-        F: Vertical load,N, for the column to support (Calculated as a centrally placed load, also in the case when the column's center of gravity moves)
+        q: Line load for the beam to support [kN/m]
         Str: Strength class for the wood (C30, C24, C18, C14, GL32h, GL28h or GL24h)[Default: 24C]
         Sup: Support conditions for the column (1=Simply supported both ends, 2=One end fixed and one end not supported, 3=One end fixed and one end simply supported, 4=Both ends fixed [Default: Simply supported]
         ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber) standard profiles [Default: sawn]
-        WidthProfile: Width of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated based on ToW.
-        HeightProfile: Height of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated based on ToW.
+        WidthProfile: Width of profile [mm] to calculate qmax for. If no value is inserted, the qmax is calculated based on ToW.
+        HeightProfile: Height of profile [mm] to calculate qmax for. If no value is inserted, the qmax is calculated based on ToW.
         WS: Wood Species (1=Conifer p>290 kg/m3, 2=Laminated wood p>290 kg/m3 , 3=Hardwood p>450 kg/m3 [Default: Conifer]
-        t: Time of exposure in minutes [Default 60]
+        t: Time of exposure [minutes] [Default 60]
         SEF: Sides Exposed to Fire(1=Width, 2=Height, 3=Width+Height, 4=Width+2*Height, 5=2*Width+Height, 6=2*Width, 7=2*Height, 8=All [Default: Width+2*Height]
     Returns:
-        NRc,fire: Charateristic resistance of the column after fire [kN]
+        qmax: Maximum line load the beam can support [kN/m]
         Width: Width of the cross section before fire [mm]
         Height: Height of the cross section before fire [mm]
         Geo: 3D model of the cross section
@@ -210,30 +212,37 @@ L = []
 Mmax = []
 for i in range(len(CL)):
     L.append(rs.CurveLength(CL[i]))
-    if Sup==1:
-        Mmax.append(1/8*F[i]*L[i]**2)
+    if Sup==1 or Sup==4:
+        Mmax.append(1/8*q[i]*L[i]**2)
     elif Sup==2:
-        Mmax.append(1/2*F[i]*L[i]**2)
+        Mmax.append(1/2*q[i]*L[i]**2)
     elif Sup==3:
-        Mmax.append(9/128*F[i]*L[i]**2)
-    elif Sup==4:
-        Mmax.append(1/8*F[i]*L[i]**2)
+        Mmax.append(9/128*q[i]*L[i]**2)
+
 
 # Verification of wooden beam 
 Width = []
 Height = []
 Utilization = []
 Sigmafire = []
-
+qmax = []
 for i in range(len(Mmax)):
     sigmafire = []
+    Qmax = []
     for j in range(len(Wr)):
         sigmafire.append(Mmax[i]/Iy[j]*Hr[j]/2)
+        if Sup==1 or Sup==4:
+            Qmax.append((fm*2*Iy[j])/(1/8*L[i]**2*Hr[j]))
+        elif Sup==2:
+            Qmax.append((fm*2*Iy[j])/(1/2*L[i]**2*Hr[j]))
+        elif Sup==3:
+            Qmax.append((fm*2*Iy[j])/(9/128*L[i]**2*Hr[j]))
     if Input==0:
         if 0<sigmafire[j]<fm:
            Width.append(WidthProfile)
            Height.append(HeightProfile)
            Sigmafire.append(sigmafire[0])
+           qmax.append(Qmax[0])
            Utilization.append(Sigmafire[i]/fm*100)
         else:
             ErrorMessage='No profiles with selected citeria can support the load'
@@ -242,19 +251,21 @@ for i in range(len(Mmax)):
         Wi = []
         He = []
         fmfire =[]
+        QMax =[]
         for j in range(len(wr)):
             if 0<sigmafire[j]<fm:
                 Wi.append(Wr[j])
                 He.append(Hr[j])
                 fmfire.append(sigmafire[j])
+                QMax.append(Qmax[j])
         if len(Wi)>0:
             Width.append(Wi[0])
             Height.append(He[0])
             Sigmafire.append(fmfire[0])
+            qmax.append(QMax[0])
             Utilization.append(Sigmafire[i]/fm*100)
         else:
             ErrorMessage='No profiles with selected citeria can support the load'
-
 
 """-------------------------------------------------------------------------"""
 # 3D model for "baking"
