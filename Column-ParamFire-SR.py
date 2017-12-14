@@ -1,24 +1,26 @@
 ﻿"""
-Column - Parametric fire with strength reduction method
+Calculation and selection of the smallest standard or user defined cross section for a wooden column that can support the given load during a parametric fire using the strength reduction method
+
+Created by Mikkel Dohm Andersen, DTU.BYG
 
     Args:
         CL: Center Line for column
-        F: Vertical load,N, for the column to support (Calculated as a centrally placed load, also in the case when the column's center of gravity moves)
+        F: Vertical load [kN] for the column to support (Calculated as a centrally placed load, also in the case when the column's center of gravity moves)
         Str: Strength class for the wood (C30, C24, C18, C14, GL32h, GL28h or GL24h) [Default: C24]
         Sup: Support conditions for the column (1=Simply supported both ends, 2=One end fixed and one end not supported, 3=One end fixed and one end simply supported, 4=Both ends fixed [Default: Simply supported]
-        ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber) standard profiles.
-        WidthProfile: Width of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated on ToW.
-        HeightProfile: Height of profile [mm] to calculate NRc,fire for. If no value is inserted, the NRc,fire is calculated on ToW.
+        ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber) standard profiles [Default: sawn]
+        WidthProfile: Width of profile [mm] to calculate NRcfire for. If no value is inserted, the NRcfire is calculated based on ToW.
+        HeightProfile: Height of profile [mm] to calculate NRcfire for. If no value is inserted, the NRcfire is calculated based on ToW.
         WS: Wood Species (1=Conifer p>290 kg/m3, 2=Laminated wood p>290 kg/m3 , 3=Hardwood p>450 kg/m3, 4=Plywood with a thickness d>20 mm and density p>450 kg/m3 [Default: Conifer]
-        t: Time of exposure in minutes [Default: 60]
+        t: Time of exposure [minutes] [Default: 60]
         SEF: Sides Exposed to Fire(1=Width, 2=Height, 3=Width+Height, 4=Width+2*Height, 5=2*Width+Height, 6=2*Width, 7=2*Height, 8=All [Default: All]
         O: Opening factor [m1/2] [Default: 0.4]
-        q: Fireload [MJ/m2] [Default: 400]
-        Ti: Thermal inertia [Default: 1160]
+        qf: Fireload [MJ/m2] [Default: 400]
+        Ti: Thermal inertia [Ws1/2/m2/K] [Default: 1160]
     Returns:
-        NRc,fire: Charateristic resistance of the column after fire [kN]
-        Width: Width of the cross section before fire
-        Height: Height of the cross section before fire
+        NRcfire: Charateristic resistance of the column after fire [kN]
+        Width: Width of the cross section before fire [mm]
+        Height: Height of the cross section before fire [mm]
         Geo: 3D model of the cross section
         Utilization: Utilization rate [%]
         ErrorMessage: Check this output for error messages
@@ -37,7 +39,7 @@ WSDef = 1
 tDef = 60
 SEFDef = 8
 ODef= 0.4
-qDef = 400
+qfDef = 400
 TiDef = 1160
 
 if not Str:
@@ -54,8 +56,8 @@ if not SEF:
     SEF=SEFDef
 if not O:
     O=ODef
-if not q:
-    q=qDef
+if not qf:
+    qf=qfDef
 if not Ti:
     Ti=TiDef
 
@@ -179,7 +181,7 @@ else:
 """-------------------------------------------------------------------------"""
 # CALCULATION OF CROSS SECTION AFTER FIRE
 #Maximum duration of fire
-t1=0.0145*q/O
+t1=0.0145*qf/O
 #Charring rate
 BL=1.25-0.035/((1160/Ti)*O+0.021)
 B1=1.5*Bn*BL
@@ -384,13 +386,13 @@ for i in range(len(CL)):
         else:
             kc.append(1/(kfire[j]+m.sqrt(kfire[j]**2-Lambdarel[j]**2)))
         #Characteristic resistance of wood
-        nrcfire.append(Ar[j]*fc*kc[j])
+        nrcfire.append(Ar[j]*fc*kc[j]/1000)
     if Input==0:
         if nrcfire>F:
             Width.append(WidthProfile)
             Height.append(HeightProfile)
             NRcfire.append(nrcfire[0])
-            Utilization.append(F[i]/NRcfire[0])
+            Utilization.append(F[i]/NRcfire[0]*100)
         else:
             ErrorMessage='No profiles with selected citeria can support the load'
     else:
@@ -407,7 +409,7 @@ for i in range(len(CL)):
             Width.append(Wi[0])
             Height.append(He[0])
             NRcfire.append(NRc[0])
-            Utilization.append(F[i]/NRcfire[i])
+            Utilization.append(F[i]/NRcfire[i]*100)
         else:
             ErrorMessage='No profiles with selected citeria can support the load'
 
