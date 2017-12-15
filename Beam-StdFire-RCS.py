@@ -4,11 +4,11 @@ Calculation and selection of the smallest standard or user defined cross section
 Created by Mikkel Dohm Andersen, DTU.BYG
 
     Args:
-        CL: Center Line for column
+        CL: Center Line for beam
         q: Line load for the beam to support [kN/m]
-        Str: Strength class for the wood (C30, C24, C18, C14, GL32h, GL28h or GL24h)[Default: 24C]
+        Str: Strength class for the wood 1=C30, 2=C24, 3=C18, 4=C14, 5=GL32h, 6=GL28h or 7=GL24h)[Default: 24C]
         Sup: Support conditions for the column (1=Simply supported both ends, 2=One end fixed and one end not supported, 3=One end fixed and one end simply supported, 4=Both ends fixed [Default: Simply supported]
-        ToW: Type of Wood; Sawn, Planed or Glulam (Glued laminated timber) standard profiles [Default: sawn]
+        ToW: Type of Wood; 1=Sawn, 2=Planed or 3=Glulam (Glued laminated timber) standard profiles [Default: sawn]
         WidthProfile: Width of profile [mm] to calculate qmax for. If no value is inserted, the qmax is calculated based on ToW.
         HeightProfile: Height of profile [mm] to calculate qmax for. If no value is inserted, the qmax is calculated based on ToW.
         WS: Wood Species (1=Conifer p>290 kg/m3, 2=Laminated wood p>290 kg/m3 , 3=Hardwood p>450 kg/m3 [Default: Conifer]
@@ -28,9 +28,9 @@ import math as m
 
 """-------------------------------------------------------------------------"""
 # USER INPUTS
-StrDef = 'c24'
+StrDef = 1
 SupDef = 1
-ToWDef = 'sawn'
+ToWDef = 1
 WSDef = 1
 tDef = 60
 SEFDef = 4
@@ -49,31 +49,31 @@ if not SEF:
     SEF=SEFDef
 
 # Strength class
-if str.upper(Str)=='C30':
+if Str==1:
     fm=30
     fc=23
     E=8000
-elif str.upper(Str)=='C24':
+elif Str==2:
     fm=24
     fc=21
     E=7400
-elif str.upper(Str)=='C18':
+elif Str==3:
     fm=18
     fc=18
     E=6000
-elif str.upper(Str)=='C14':
+elif Str==4:
     fm=14
     fc=16
     E=4700
-elif str.upper(Str)=='GL32H':
+elif Str==5:
     fm=32
     fc=29
     E=11100
-elif str.upper(Str)=='GL28H':
-    fm=38
+elif Str==6:
+    fm=28
     fc=26.5
     E=10200
-elif str.upper(Str)=='GL24H':
+elif Str==7:
     fm=24
     fc=24
     E=9400
@@ -82,15 +82,15 @@ if WidthProfile>0 and HeightProfile>0:
     W=[WidthProfile]
     H=[HeightProfile]
     Input=0
-elif str.lower(ToW)=='sawn':
+elif ToW==1:
     W=[50,38,50,50,75,50,50,63,50,50,100,50,75,75,75,125,75,100,150,100,175,200]
     H=[50,73,75,100,75,125,150,125,175,200,100,225,150,175,200,125,225,200,150,225,175,200]
     Input=1
-elif str.lower(ToW)=='planed':
+elif ToW==2:
     W=[45,45,45,70,45,45,45,45,95,45,70,70,70,120,70,95,145,95,170,195]
     H=[45,70,95,70,120,145,170,195,95,220,145,170,195,120,220,195,145,220,170,195]
     Input=1
-elif str.lower(ToW)=='glulam':
+elif ToW==3:
     w=[185,160,140,115,90,65,185,160,140,115,90,65,185,160,140,115,90,65,
     185,160,140,115,90,65,185,160,140,115,90,65,185,160,140,115,90,65,
     185,160,140,115,90,65,185,160,140,115,90,65,185,160,140,115,90,65,
