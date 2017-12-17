@@ -401,7 +401,6 @@ Start = []
 Vector = []
 Plane = []
 CrossSection = []
-Geo1 = []
 Geo = []
 Line = []
 Cl = CL[0]
@@ -410,11 +409,11 @@ for i in range(len(NRcfire)):
     if NRcfire[i]>F[i]:
         End = rs.CurveEndPoint(Cl)
         Start = rs.CurveStartPoint(Cl)
-        Vector = rs.VectorAdd(Start,End)
+        Vector = rs.VectorCreate(Start,End)
         Plane = rs.PlaneFromNormal(Start,Vector)
         for i in range(len(CL)):
             CrossSection.append(rs.AddRectangle(Plane, Height[i], Width[i]))
-            Geo1.append(rs.MoveObject(rs.ExtrudeCurve(CrossSection[i],CL[i]),rs.CurveStartPoint(CL[i])))
+            Geo1.append(rs.MoveObject(rs.ExtrudeCurve(CrossSection[i],CL[i]),(rs.CurveStartPoint(CL[i])-rs.CurveStartPoint(CL[0]))))
             Geo.append(rs.MoveObject(Geo1[i],[(-Width[i]/2)/10,0,(-Height[i]/2)/10]))
             rs.CapPlanarHoles(Geo[i])
 
